@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Clock, Coffee, Calendar, Users, TreePalm } from 'lucide-react'
 import EmployeeSidebar from '../Components/EmployeeSidebar'
 import axios from 'axios'
 import { baseUrl } from '../App'
 import { toast } from 'react-toastify'
+import { formatToIndianDateTime } from '../utils/helpingFunc'
 
 export const formatDateTime = (isoString, options = {}) => {
   if (!isoString) return "-";
@@ -58,25 +59,28 @@ const Employee = () => {
 
   const [hourDone, setHourDone] = useState(false)
 
+  const [leaves, setLeaves] = useState([])
+  console.log("Leave", leaves)
+
   const parseCustomDate = (dateStr) => {
-  const cleaned = dateStr.replace('at', '');
-  return new Date(cleaned);
-};
+    const cleaned = dateStr.replace('at', '');
+    return new Date(cleaned);
+  };
 
-const getWorkingDuration = () => {
-  const inTime = parseCustomDate(clockInTime);
-  const outTime = parseCustomDate(clockOutTime);
+  const getWorkingDuration = () => {
+    const inTime = parseCustomDate(clockInTime);
+    const outTime = parseCustomDate(clockOutTime);
 
-  const diffMs = outTime - inTime;
+    const diffMs = outTime - inTime;
 
-  if (diffMs <= 0) return 'Invalid time';
+    if (diffMs <= 0) return 'Invalid time';
 
-  const totalMinutes = Math.floor(diffMs / 60000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
 
-  return `${hours} hr ${minutes} min`;
-};
+    return `${hours} hr ${minutes} min`;
+  };
 
 
   const handleClockIn = async () => {
@@ -176,6 +180,37 @@ const getWorkingDuration = () => {
     }
   };
 
+  const [upcommingHolidays, setUpcommingHolidays] = useState([
+    { name: 'Martin Luther King Jr. Day', date: 'January 20, 2025' },
+    { name: "Presidents' Day", date: 'February 17, 2025' },
+    { name: 'Memorial Day', date: 'May 26, 2025' },
+  ])
+
+  const getholidays = async () => {
+    const todayDate = new Date()
+    const res = await axios.get(`${baseUrl}admin/getholidays`)
+    setUpcommingHolidays(res.data.allHolidays)
+  }
+
+  useEffect(() => {
+    getholidays()
+  }, [])
+
+  const leaveStatus = async () => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    const userId = storedUser?._id;
+    try {
+      const res = await axios.get(`${baseUrl}admin/userLeaves/${userId}`)
+      setLeaves(res.data.leaves);
+    } catch (err) {
+      console.log("error",err)
+    }
+  };
+
+  useEffect(() => {
+    leaveStatus();
+  }, []);
+
   return (
     <div className="flex flex-col bg-gray-50 min-h-screen">
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
@@ -220,7 +255,7 @@ const getWorkingDuration = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <button 
+                <button
                   onClick={startBreak}
                   disabled={startedBreak}
                   className="flex items-center justify-center gap-2 w-full px-4 py-3 text-white font-semibold bg-[#4b5563] hover:bg-[#3f4853] rounded-md disabled:cursor-not-allowed disabled:text-[#6b7280] disabled:bg-[#d1d5db]">
@@ -228,7 +263,7 @@ const getWorkingDuration = () => {
                   Start Break
                 </button>
 
-                <button 
+                <button
                   onClick={endBreak}
                   disabled={!startedBreak}
                   className="flex items-center justify-center gap-2 w-full px-4 py-3 text-white font-semibold bg-[#4b5563] hover:bg-[#3f4853] rounded-md disabled:cursor-not-allowed disabled:text-[#6b7280] disabled:bg-[#d1d5db]">
@@ -243,19 +278,19 @@ const getWorkingDuration = () => {
               <div className="space-y-3 text-sm text-gray-700">
                 <div className="flex justify-between">
                   <span className="font-semibold">Clock In:</span>
-                  <span className="font-medium text-gray-900">{clockInTime?clockInTime:'--'}</span>
+                  <span className="font-medium text-gray-900">{clockInTime ? clockInTime : '--'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-semibold">Clock Out:</span>
-                  <span className="font-medium text-gray-900">{clockOutTime?clockOutTime:'--'}</span>
+                  <span className="font-medium text-gray-900">{clockOutTime ? clockOutTime : '--'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-semibold">Working Hours:</span>
-                  <span className="font-medium text-gray-900">{clockOutTime?getWorkingDuration():'--'}</span>
+                  <span className="font-medium text-gray-900">{clockOutTime ? getWorkingDuration() : '--'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-semibold">Break Time:</span>
-                  <span className="font-medium text-gray-900">{breakDuration?breakDuration:'--'}</span>
+                  <span className="font-medium text-gray-900">{breakDuration ? breakDuration : '--'}</span>
                 </div>
               </div>
             </div>
@@ -266,16 +301,12 @@ const getWorkingDuration = () => {
             <div className="flex-1 min-w-[300px] p-4 bg-white rounded-lg border border-gray-200 shadow">
               <h2 className="text-lg font-semibold mb-4">Upcoming Holidays</h2>
               <div className="space-y-3">
-                {[
-                  { name: 'Martin Luther King Jr. Day', date: 'January 20, 2025' },
-                  { name: "Presidents' Day", date: 'February 17, 2025' },
-                  { name: 'Memorial Day', date: 'May 26, 2025' },
-                ].map((holiday, index) => (
+                {upcommingHolidays.map((holiday, index) => (
                   <div key={index} className="flex items-center gap-3 bg-gray-50 p-3 rounded-md">
                     <Calendar className="text-gray-500 w-5 h-5" />
                     <div>
-                      <div className="font-medium">{holiday.name}</div>
-                      <div className="text-sm font-semibold text-gray-500">{holiday.date}</div>
+                      <div className="font-medium">{holiday.EventName}</div>
+                      <div className="text-sm font-semibold text-gray-500">{formatToIndianDateTime(holiday.startDate).date} - {formatToIndianDateTime(holiday.endDate).date} </div>
                     </div>
                   </div>
                 ))}
@@ -283,27 +314,20 @@ const getWorkingDuration = () => {
             </div>
 
             <div className="flex-1 min-w-[300px] p-4 bg-white rounded-lg border border-gray-200 shadow">
-              <h2 className="text-lg font-semibold mb-4">Approved Leaves</h2>
+              <h2 className="text-lg font-semibold mb-4">Leave Status</h2>
               <div className="space-y-3">
-                <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-md">
-                  <TreePalm className="text-gray-500 w-5 h-5" />
+                {leaves.map((items, i)=>
+
+                <div key={i} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
                   <div>
-                    <div className="font-medium">Vacation Leave</div>
-                    <div className="text-sm font-semibold text-gray-500">March 15–19, 2025</div>
+                    <div className="font-medium">{items.reason}</div>
+                    <div className="text-sm font-semibold text-gray-500">From: {formatToIndianDateTime(items.startDate).date} to {formatToIndianDateTime(items.endDate).date}</div>
+                  </div>
+                  <div>
+                    <h2>Status: <span className={items?.status==='Pending'?'text-amber-300 font-semibold':items?.status==='Approved'?'text-green-500 font-semibold':'text-red-600 font-semibold'}>{items.status}</span></h2>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-md">
-                  <Users className="text-gray-500 w-5 h-5" />
-                  <div>
-                    <div className="font-medium">Personal Leave</div>
-                    <div className="text-sm font-semibold text-gray-500">April 10, 2025</div>
-                  </div>
-                </div>
-
-                <p className="text-center text-sm font-semibold text-gray-500 pt-2">
-                  No more approved leaves
-                </p>
+                )}
               </div>
             </div>
           </div>
