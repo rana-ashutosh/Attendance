@@ -6,6 +6,7 @@ import Employee from './Dasboard/Employee'
 import Admin from './Dasboard/Admin'
 import LeaveApplyForm from './Components/Employee Component/LeaveApplyForm'
 import { ToastContainer } from 'react-toastify';
+import Holidays from './Components/Employee Component/Holidays'
 
 const App = () => {
   return (
@@ -18,6 +19,8 @@ const App = () => {
           <Route path='/employee' element={<Employee />}></Route>
           <Route path='/admin' element={<Admin />}></Route>
           <Route path='/leave' element={<LeaveApplyForm />}></Route>
+          <Route path='/Holidays' element={<Holidays />}></Route>
+
         </Routes>
       </BrowserRouter>
     </div>

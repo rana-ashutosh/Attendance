@@ -45,10 +45,7 @@ const Employee = () => {
     return clockedIn ? true : false;
   });
 
-  const [clockInTime, setClockInTime] = useState(() => {
-    const time = JSON.parse(localStorage.getItem("ClockInTime"));
-    return time ? formatDateTime(time) : '';
-  });
+  const [clockInTime, setClockInTime] = useState();
 
   const [clockOutTime, setClockOutTime] = useState();
   const [breakDuration, setBreakDuration] = useState();
@@ -85,12 +82,13 @@ const Employee = () => {
 
   const handleClockIn = async () => {
     try {
+      console.log(currentUser._id)
       const res = await axios.post(`${baseUrl}attendance/clock-in/${currentUser._id}`);
-      const time = res.data.clockIn;
-      localStorage.setItem('ClockInTime', JSON.stringify(time));
+      console.log(res)
+
       setClockIn(false);
       setClockOut(true);
-      setClockInTime(formatDateTime(time));
+      getAttendanceData()
       toast.success('Clocked In Successfully');
 
     } catch (err) {
@@ -105,7 +103,6 @@ const Employee = () => {
       console.log(time)
       setClockOut(false);
       setClockIn(true);
-      localStorage.removeItem('ClockInTime');
       localStorage.removeItem('breakStarted');
       setStartedBreak(false);
       setClockOutTime(formatDateTime(time));
@@ -180,21 +177,7 @@ const Employee = () => {
     }
   };
 
-  const [upcommingHolidays, setUpcommingHolidays] = useState([
-    { name: 'Martin Luther King Jr. Day', date: 'January 20, 2025' },
-    { name: "Presidents' Day", date: 'February 17, 2025' },
-    { name: 'Memorial Day', date: 'May 26, 2025' },
-  ])
 
-  const getholidays = async () => {
-    const todayDate = new Date()
-    const res = await axios.get(`${baseUrl}admin/getholidays`)
-    setUpcommingHolidays(res.data.allHolidays)
-  }
-
-  useEffect(() => {
-    getholidays()
-  }, [])
 
   const leaveStatus = async () => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
@@ -203,14 +186,36 @@ const Employee = () => {
       const res = await axios.get(`${baseUrl}admin/userLeaves/${userId}`)
       setLeaves(res.data.leaves);
     } catch (err) {
-      console.log("error",err)
+      console.log("error", err)
     }
   };
 
   useEffect(() => {
     leaveStatus();
+    getAttendanceData()
   }, []);
 
+  const getAttendanceData = async () => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    const userId = storedUser?._id;
+    try {
+      const res = await axios.get(`${baseUrl}attendance/${userId}`)
+      const data = await res?.data?.userFound?.clockIn
+      if (data) {
+
+        setClockInTime(formatDateTime(res.data.userFound.clockIn));
+        setClockIn(false);
+        setClockOut(true);
+      }
+      else {
+
+      }
+
+      console.log("res", res)
+    } catch (err) {
+      console.log("error", err)
+    }
+  }
   return (
     <div className="flex flex-col bg-gray-50 min-h-screen">
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
@@ -298,35 +303,22 @@ const Employee = () => {
 
           {/* Holidays and Leaves */}
           <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 min-w-[300px] p-4 bg-white rounded-lg border border-gray-200 shadow">
-              <h2 className="text-lg font-semibold mb-4">Upcoming Holidays</h2>
-              <div className="space-y-3">
-                {upcommingHolidays.map((holiday, index) => (
-                  <div key={index} className="flex items-center gap-3 bg-gray-50 p-3 rounded-md">
-                    <Calendar className="text-gray-500 w-5 h-5" />
-                    <div>
-                      <div className="font-medium">{holiday.EventName}</div>
-                      <div className="text-sm font-semibold text-gray-500">{formatToIndianDateTime(holiday.startDate).date} - {formatToIndianDateTime(holiday.endDate).date} </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+
 
             <div className="flex-1 min-w-[300px] p-4 bg-white rounded-lg border border-gray-200 shadow">
               <h2 className="text-lg font-semibold mb-4">Leave Status</h2>
               <div className="space-y-3">
-                {leaves.map((items, i)=>
+                {leaves.map((items, i) =>
 
-                <div key={i} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
-                  <div>
-                    <div className="font-medium">{items.reason}</div>
-                    <div className="text-sm font-semibold text-gray-500">From: {formatToIndianDateTime(items.startDate).date} to {formatToIndianDateTime(items.endDate).date}</div>
+                  <div key={i} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+                    <div>
+                      <div className="font-medium">{items.reason}</div>
+                      <div className="text-sm font-semibold text-gray-500">From: {formatToIndianDateTime(items.startDate).date} to {formatToIndianDateTime(items.endDate).date}</div>
+                    </div>
+                    <div>
+                      <h2>Status: <span className={items?.status === 'Pending' ? 'text-amber-300 font-semibold' : items?.status === 'Approved' ? 'text-green-500 font-semibold' : 'text-red-600 font-semibold'}>{items.status}</span></h2>
+                    </div>
                   </div>
-                  <div>
-                    <h2>Status: <span className={items?.status==='Pending'?'text-amber-300 font-semibold':items?.status==='Approved'?'text-green-500 font-semibold':'text-red-600 font-semibold'}>{items.status}</span></h2>
-                  </div>
-                </div>
                 )}
               </div>
             </div>

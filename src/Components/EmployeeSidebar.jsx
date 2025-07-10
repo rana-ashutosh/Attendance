@@ -1,4 +1,4 @@
-import { CalendarDays, FileClock, LayoutDashboard, LogOut } from 'lucide-react'
+import { CalendarDays, FileClock, LayoutDashboard, LogOut, PartyPopper } from 'lucide-react'
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
@@ -7,7 +7,8 @@ const EmployeeSidebar = () => {
 
     const navItems = [
         { option: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" />, link: '/employee' },
-        { option: 'Apply Leaves', icon: <FileClock className="w-4 h-4" />, link: '/leave' }
+        { option: 'Apply Leaves', icon: <FileClock className="w-4 h-4" />, link: '/leave' },
+        { option: 'Holidays', icon: <PartyPopper className="w-4 h-4"/>, link: '/Holidays'}
     ];
 
     return (
