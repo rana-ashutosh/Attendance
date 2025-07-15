@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Clock, Coffee, Calendar, Users, TreePalm } from 'lucide-react'
+import { Clock, Coffee, Calendar, Users, TreePalm, Menu } from 'lucide-react'
 import EmployeeSidebar from '../Components/EmployeeSidebar'
 import axios from 'axios'
 import { baseUrl } from '../App'
@@ -34,6 +34,9 @@ export const formatTodayDate = () => {
 
 const Employee = () => {
   const currentUser = JSON.parse(localStorage.getItem("user"));
+
+  const [showSidebar, setShowSidebar] = useState(false);
+
 
   const [clockIn, setClockIn] = useState(() => {
     const clockedIn = JSON.parse(localStorage.getItem("ClockInTime"));
@@ -177,8 +180,6 @@ const Employee = () => {
     }
   };
 
-
-
   const leaveStatus = async () => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
     const userId = storedUser?._id;
@@ -218,8 +219,37 @@ const Employee = () => {
   }
   return (
     <div className="flex flex-col bg-gray-50 min-h-screen">
+      <div className="flex justify-between">
+        <div className="lg:hidden p-4">
+          <button onClick={() => setShowSidebar(true)} className="text-gray-700">
+            <Menu size={28} />
+          </button>
+        </div>
+        <div className="flex items-center px-5">
+          <h1 className="text-md font-bold text-gray-800 lg:hidden">Employee Dashboard</h1>
+        </div>
+      </div>
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
-        <EmployeeSidebar />
+
+        {showSidebar && (
+          <div
+            className="fixed inset-0 z-40 bg-transparent"
+            onClick={() => setShowSidebar(false)}
+          />
+        )}
+
+
+        <div className={`fixed top-0 left-0 z-50 h-full bg-white shadow-lg w-60 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="flex justify-end p-4">
+            <button
+              onClick={() => setShowSidebar(false)}
+              className="text-2xl text-gray-600 hover:text-gray-800"
+            >
+              &times;
+            </button>
+          </div>
+          <EmployeeSidebar />
+        </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6 space-y-6">
           <div className='flex justify-end'>

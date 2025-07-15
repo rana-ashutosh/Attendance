@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Coffee, User, Users, LayoutDashboard, LogOut, Pencil, Trash2, Plus, UserRound } from 'lucide-react';
+import { Calendar, User, Users, LayoutDashboard, LogOut, Plus, UserRound, Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { baseUrl } from '../App';
 import { formatToIndianDateTime } from '../utils/helpingFunc';
 const AdminDashboard = () => {
 
- 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [employeeAttendance, setemployeeAttendance] = useState({
     totalEmployee: 0,
     present: 0,
@@ -25,12 +25,12 @@ const AdminDashboard = () => {
     { name: 'Absent', value: employeeAttendance.absent, icon: <Users className="w-5 h-5" /> },
   ];
 
-  const [holidayRequests,setHolidayRequests] = useState([])
+  const [holidayRequests, setHolidayRequests] = useState([])
 
-  const [formInput,setFormInput] = useState({
-    EventName:'',
-    startDate:'',
-    endDate:''
+  const [formInput, setFormInput] = useState({
+    EventName: '',
+    startDate: '',
+    endDate: ''
   })
 
   useEffect(() => {
@@ -74,9 +74,9 @@ const AdminDashboard = () => {
     }
   }
 
-  const handleUpdateLeave = async(id, status) => {
+  const handleUpdateLeave = async (id, status) => {
     try {
-      const res = await axios.post(`${baseUrl}admin/updateleave`,{leaveId:id,status:status})
+      const res = await axios.post(`${baseUrl}admin/updateleave`, { leaveId: id, status: status })
       console.log(res, 'newdata=>>');
       LeavesRec()
     }
@@ -86,18 +86,18 @@ const AdminDashboard = () => {
 
   }
 
-  const handleChange=(e)=>{
-    const {name,value} = e.target
-    console.log(name,value)
-    setFormInput((prev)=>{return{...prev,[name]:value}})
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    console.log(name, value)
+    setFormInput((prev) => { return { ...prev, [name]: value } })
   }
 
-   const handleAddHoliday = async() => {
-    try{
-      await axios.post(`${baseUrl}admin/registerholiday`,formInput)
+  const handleAddHoliday = async () => {
+    try {
+      await axios.post(`${baseUrl}admin/registerholiday`, formInput)
       holidaysRec()
     }
-    catch(err){
+    catch (err) {
       console.log(err)
     }
   }
@@ -105,7 +105,9 @@ const AdminDashboard = () => {
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
-      <aside className="w-full lg:w-60 bg-white shadow-md px-4 py-6 space-y-6">
+      <aside className={`fixed z-50 lg:static top-0 left-0 h-full w-64 bg-white shadow-md px-4 py-6 space-y-6 
+      transition-transform transform duration-400 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+      lg:translate-x-0 lg:w-60 lg:relative lg:shadow-none lg:block`}>
         <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
         <nav className="space-y-4 text-gray-700 text-sm font-semibold">
           {navItems.map((item, i) => (
@@ -114,8 +116,7 @@ const AdminDashboard = () => {
               {item.icon}
               {item.name}
             </div>
-          )
-          )}
+          ))}
         </nav>
         <Link to='/'>
           <div className='flex text-gray-700 text-sm font-semibold gap-3 cursor-pointer hover:text-red-600'>
@@ -125,8 +126,22 @@ const AdminDashboard = () => {
         </Link>
       </aside>
 
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-black opacity-50 lg:hidden z-40" >
+            
+          </div>
+      )}
+
       <main className="flex-1 p-4 sm:p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 w-full">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="lg:hidden text-gray-700 focus:outline-none">
+            <Menu className="w-6 h-6" />
+          </button>
+
           <div>
             <h2 className="text-xl font-semibold">Dashboard</h2>
             <p className="text-gray-600 text-sm">Welcome back, Admin</p>
@@ -164,16 +179,16 @@ const AdminDashboard = () => {
                       <UserRound size={30} />
                     </span>
                     <div className='flex gap-16'>
-                    <div>
-                      <div className='flex items-center gap-3'>
-                      <div className="font-semibold">{req?.userId?.name}</div> 
-                          <span className={req?.status==='Pending'?'text-amber-300 font-semibold':req?.status==='Approved'?'text-green-500 font-semibold':'text-red-600 font-semibold'}> {req?.status}</span>
+                      <div>
+                        <div className='flex items-center gap-3'>
+                          <div className="font-semibold">{req?.userId?.name}</div>
+                          <span className={req?.status === 'Pending' ? 'text-amber-300 font-semibold' : req?.status === 'Approved' ? 'text-green-500 font-semibold' : 'text-red-600 font-semibold'}> {req?.status}</span>
+                        </div>
+                        <div className="text-sm text-gray-500 font-medium">{formatToIndianDateTime(req.startDate).date} - {formatToIndianDateTime(req.endDate).date}</div>
                       </div>
-                      <div className="text-sm text-gray-500 font-medium">{formatToIndianDateTime(req.startDate).date} - {formatToIndianDateTime(req.endDate).date}</div>
-                    </div>
-                    <div>
-                      <span className='font-semibold'>Reason - </span>{req.reason}
-                    </div>
+                      <div>
+                        <span className='font-semibold'>Reason - </span>{req.reason}
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -196,49 +211,49 @@ const AdminDashboard = () => {
 
           </div>
 
-         <table className="w-full text-sm text-left text-gray-700 table-auto border">
-  <thead className="text-xs text-gray-700 font-bold ">
-    <tr>
-      <th className="py-2 px-4 ">Holiday Name</th>
-      <th className="py-2 px-4">Start Date</th>
-      <th className="py-2 px-4 ">End Date</th>
-      <th className="py-2 px-4">Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr className="bg-gray-100">
-      <td className="py-2 px-4">
-        <input type="text" name='EventName' value={formInput.EventName} placeholder="Enter Holiday" onChange={handleChange} className="outline-none w-full px-2 py-1 border rounded" />
-      </td>
-      <td className="py-2 px-4">
-        <input type="date" name='startDate' value={formInput.startDate} onChange={handleChange} className="w-full px-2 py-1 border rounded" />
-      </td>
-      <td className="py-2 px-4">
-        <input type="date" name='endDate' value={formInput.endDate} onChange={handleChange} className="w-full px-2 py-1 border rounded" />
-      </td>
-      <td className="py-2 px-4">
-        <button
-          onClick={handleAddHoliday}
-          className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800"
-        >
-          <Plus className="w-4 h-4" />
-          Add Holiday
-        </button>
-      </td>
-    </tr>
+          <table className="w-full text-sm text-left text-gray-700 table-auto border">
+            <thead className="text-xs text-gray-700 font-bold ">
+              <tr>
+                <th className="py-2 px-4 ">Holiday Name</th>
+                <th className="py-2 px-4">Start Date</th>
+                <th className="py-2 px-4 ">End Date</th>
+                <th className="py-2 px-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="bg-gray-100">
+                <td className="py-2 px-4">
+                  <input type="text" name='EventName' value={formInput.EventName} placeholder="Enter Holiday" onChange={handleChange} className="outline-none w-full px-2 py-1 border rounded" />
+                </td>
+                <td className="py-2 px-4">
+                  <input type="date" name='startDate' value={formInput.startDate} onChange={handleChange} className="w-full px-2 py-1 border rounded" />
+                </td>
+                <td className="py-2 px-4">
+                  <input type="date" name='endDate' value={formInput.endDate} onChange={handleChange} className="w-full px-2 py-1 border rounded" />
+                </td>
+                <td className="py-2 px-4">
+                  <button
+                    onClick={handleAddHoliday}
+                    className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-800"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Holiday
+                  </button>
+                </td>
+              </tr>
 
-    {holidayRequests?.map((holiday, index) => (
-      <tr key={index} className="border-t">
-        <td className="py-2 px-4 ">{holiday.EventName}</td>
-        <td className="py-2 px-4">{formatToIndianDateTime(holiday.startDate).date}</td>
-        <td className="py-2 px-4 ">{formatToIndianDateTime(holiday.endDate).date}</td>
-        <td className="py-2 px-4">
-          {/* Optional delete/edit buttons here */}
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
+              {holidayRequests?.map((holiday, index) => (
+                <tr key={index} className="border-t">
+                  <td className="py-2 px-4 ">{holiday.EventName}</td>
+                  <td className="py-2 px-4">{formatToIndianDateTime(holiday.startDate).date}</td>
+                  <td className="py-2 px-4 ">{formatToIndianDateTime(holiday.endDate).date}</td>
+                  <td className="py-2 px-4">
+                    {/* Optional delete/edit buttons here */}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
         </div>
       </main>

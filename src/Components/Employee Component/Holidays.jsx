@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import EmployeeSidebar from '../EmployeeSidebar'
-import { Calendar } from 'lucide-react'
+import { Calendar, Menu } from 'lucide-react'
 import { formatToIndianDateTime } from '../../utils/helpingFunc'
 import axios from 'axios'
 import { baseUrl } from '../../App'
 
 const Holidays = () => {
+
+    const [showSidebar, setShowSidebar] = useState(false);
+
 
     const [upcommingHolidays, setUpcommingHolidays] = useState([
         { name: 'Martin Luther King Jr. Day', date: 'January 20, 2025' },
@@ -25,10 +28,37 @@ const Holidays = () => {
 
     return (
         <div className='flex bg-gray-50 w-full'>
-            <div className='h-screen w-fit'>
+            {showSidebar && (
+                <div
+                    className="fixed inset-0 z-40 bg-transparent"
+                    onClick={() => setShowSidebar(false)}
+                />
+            )}
+
+
+            <div className={`fixed top-0 left-0 z-50 h-full bg-white shadow-lg w-60 transform transition-transform duration-300 ease-in-out ${showSidebar ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex justify-end p-4">
+                    <button
+                        onClick={() => setShowSidebar(false)}
+                        className="text-2xl text-gray-600 hover:text-gray-800"
+                    >
+                        &times;
+                    </button>
+                </div>
                 <EmployeeSidebar />
             </div>
+
             <div className="flex-1 min-w-[300px] p-4 bg-white rounded-lg border border-gray-200 shadow">
+                <div className="flex justify-between">
+                    <div className="lg:hidden p-4">
+                        <button onClick={() => setShowSidebar(true)} className="text-gray-700">
+                            <Menu size={28} />
+                        </button>
+                    </div>
+                    <div className="flex items-center">
+                        <h1 className="text-md font-bold text-gray-800 lg:hidden px-5">Employee Dashboard</h1>
+                    </div>
+                </div>
                 <h2 className="text-lg font-semibold mb-4">Upcoming Holidays</h2>
                 <div className="space-y-3">
                     {upcommingHolidays.map((holiday, index) => (
